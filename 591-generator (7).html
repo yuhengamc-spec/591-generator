@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>591 文案產生器｜宥恆資產</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a23;
+    --surface2: #22222e;
+    --border: #2e2e3f;
+    --accent: #ff6b35;
+    --accent2: #ffc947;
+    --text: #f0f0f5;
+    --text2: #9090aa;
+    --green: #4caf82;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+  header { text-align: center; padding: 32px 0 40px; }
+  header .logo { font-size: 13px; letter-spacing: 3px; color: var(--accent); margin-bottom: 10px; }
+  header h1 { font-size: clamp(22px, 5vw, 34px); font-weight: 900; line-height: 1.2; }
+  header h1 span { color: var(--accent2); }
+
+  .container { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .card-title {
+    font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--accent);
+    text-transform: uppercase; margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::before { content: ''; display: block; width: 4px; height: 16px; background: var(--accent); border-radius: 2px; }
+
+  .field-group { display: flex; flex-direction: column; gap: 16px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  @media(max-width:600px) { .grid3 { grid-template-columns: 1fr 1fr; } .grid5 { grid-template-columns: 1fr 1fr 1fr; } }
+  @media(max-width:400px) { .grid2,.grid3,.grid5 { grid-template-columns: 1fr 1fr; } }
+
+  label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; font-weight: 500; }
+  input[type=text], input[type=number], select, textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px; padding: 10px 12px; outline: none; transition: border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 68px; }
+  select option { background: var(--surface2); }
+
+  .sub-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--text2);
+    text-transform: uppercase; margin-bottom: 8px;
+  }
+
+  /* Tag checkboxes */
+  .checks-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+  .check-item {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 20px; padding: 7px 13px; cursor: pointer;
+    transition: border-color .15s, background .15s; font-size: 13px; user-select: none;
+  }
+  .check-item:hover { border-color: var(--accent); }
+  .check-item input { display: none; }
+  .check-item.active { border-color: var(--accent); background: rgba(255,107,53,.13); color: var(--accent2); font-weight: 600; }
+
+  /* Agent */
+  .agent-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .agent-tab {
+    padding: 7px 16px; border-radius: 20px; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text2); cursor: pointer; font-size: 13px; transition: all .15s;
+  }
+  .agent-tab.active { border-color: var(--accent); background: rgba(255,107,53,.15); color: var(--accent2); font-weight: 700; }
+  .agent-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media(max-width:480px){ .agent-form { grid-template-columns: 1fr; } }
+
+  .btn-generate {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, var(--accent), #ff9a5c);
+    color: #fff; font-family: 'Noto Sans TC', sans-serif; font-size: 16px; font-weight: 900;
+    border: none; border-radius: var(--radius); cursor: pointer; letter-spacing: 2px;
+    transition: opacity .2s, transform .1s;
+  }
+  .btn-generate:hover { opacity: .9; }
+  .btn-generate:active { transform: scale(.98); }
+  .btn-generate:disabled { opacity: .5; cursor: not-allowed; }
+
+  #output-section { display: none; }
+  .titles-grid { display: flex; flex-direction: column; gap: 10px; }
+  .title-option {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; cursor: pointer; transition: border-color .15s;
+  }
+  .title-option:hover { border-color: var(--accent2); }
+  .title-option.selected { border-color: var(--accent2); background: rgba(255,201,71,.08); }
+  .title-radio {
+    width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--border);
+    flex-shrink: 0; margin-top: 2px; transition: all .15s; display: flex; align-items: center; justify-content: center;
+  }
+  .title-option.selected .title-radio { border-color: var(--accent2); background: var(--accent2); }
+  .title-option.selected .title-radio::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #000; }
+  .title-text { font-size: 14px; line-height: 1.6; }
+  .char-count { font-size: 11px; color: var(--text2); margin-top: 3px; }
+  .char-count.over { color: #ff5555; }
+
+  .copy-area { position: relative; }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text2); font-size: 12px; padding: 4px 10px; cursor: pointer;
+    transition: all .15s; font-family: 'Noto Sans TC', sans-serif;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn.copied { border-color: var(--green); color: var(--green); }
+  .output-text {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 18px 50px 18px 18px; font-size: 13.5px; line-height: 2;
+    white-space: pre-wrap; word-break: break-word; min-height: 180px;
+  }
+  .loading { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 40px; color: var(--text2); font-size: 14px; }
+  .spinner { width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">宥恆資產管理顧問</div>
+  <h1>591 文案<span>產生器</span></h1>
+</header>
+
+<div class="container">
+
+  <!-- ① 物件資訊 -->
+  <div class="card">
+    <div class="card-title">物件資訊</div>
+    <div class="field-group">
+
+      <div class="grid2">
+        <div>
+          <label>縣市＋行政區</label>
+          <input type="text" id="district" placeholder="新北市板橋區">
+        </div>
+        <div>
+          <label>地址（對外顯示）</label>
+          <input type="text" id="addr_public" placeholder="光復街1XX號">
+        </div>
+      </div>
+
+      <div>
+        <div class="sub-label">物件類型</div>
+        <div class="grid2">
+          <div>
+            <label>案件類型</label>
+            <select id="case_type">
+              <option>整層住家</option>
+              <option>獨立套房</option>
+              <option>分租套房</option>
+              <option>雅房</option>
+              <option>店面</option>
+              <option>辦公</option>
+              <option>住辦</option>
+            </select>
+          </div>
+          <div>
+            <label>建物型態</label>
+            <select id="building_type">
+              <option>電梯大樓</option>
+              <option>公寓</option>
+              <option>透天厝</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="sub-label">格局</div>
+        <div class="grid5">
+          <div><label>房</label><input type="number" id="room" min="0" placeholder="2"></div>
+          <div><label>廳</label><input type="number" id="hall" min="0" placeholder="1"></div>
+          <div><label>衛</label><input type="number" id="bath" min="0" placeholder="1"></div>
+          <div><label>陽台</label><input type="number" id="balcony_num" min="0" placeholder="1"></div>
+          <div><label>廚房</label><input type="number" id="kitchen_num" min="0" placeholder="1"></div>
+        </div>
+      </div>
+
+      <div class="grid3">
+        <div><label>所在樓層</label><input type="text" id="floor" placeholder="3"></div>
+        <div><label>總樓層</label><input type="text" id="total_floor" placeholder="14"></div>
+        <div><label>坪數</label><input type="text" id="size" placeholder="22.52坪"></div>
+      </div>
+
+      <div>
+        <div class="sub-label">費用</div>
+        <div class="grid2">
+          <div><label>租金（元/月）</label><input type="text" id="rent" placeholder="32,500"></div>
+          <div><label>管理費（元/月，若含於租金可不填）</label><input type="text" id="mgmt_fee" placeholder="1,500"></div>
+        </div>
+        <div style="margin-top:12px;">
+          <label>租金含哪些項目</label>
+          <div class="checks-wrap" id="rent-includes"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ② 交通 & 生活機能 -->
+  <div class="card">
+    <div class="card-title">交通 & 生活機能</div>
+    <div class="field-group">
+      <div>
+        <label>附近交通（手動輸入，換行分隔）</label>
+        <textarea id="transport" placeholder="江子翠捷運站步行3分鐘&#10;板橋火車站車程5分鐘&#10;公車站牌於門口"></textarea>
+      </div>
+      <div>
+        <div class="sub-label">生活機能</div>
+        <div class="checks-wrap" id="amenities-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ③ 房屋特色 -->
+  <div class="card">
+    <div class="card-title">房屋特色</div>
+    <div class="field-group">
+      <div>
+        <div class="sub-label">租賃條件</div>
+        <div class="checks-wrap" id="features-lease"></div>
+      </div>
+      <div>
+        <div class="sub-label">寵物</div>
+        <div class="checks-wrap" id="features-pet"></div>
+      </div>
+      <div>
+        <div class="sub-label">車位</div>
+        <div class="checks-wrap" id="features-parking"></div>
+      </div>
+      <div>
+        <div class="sub-label">設備 & 建物</div>
+        <div class="checks-wrap" id="features-facility"></div>
+      </div>
+      <div>
+        <div class="sub-label">電費 & 瓦斯</div>
+        <div class="checks-wrap" id="features-util"></div>
+      </div>
+      <div>
+        <div class="sub-label">空間特色</div>
+        <div class="checks-wrap" id="features-space"></div>
+      </div>
+      <div>
+        <label>其他特色補充（自由填寫，換行分隔）</label>
+        <textarea id="extra_features" placeholder="例如：鄰近光復橋，往返台北市便利&#10;裝潢新穎採光明亮"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ④ 業務員 -->
+  <div class="card">
+    <div class="card-title">業務員資訊</div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px;">
+      <div class="agent-tabs" id="agent-tabs" style="margin-bottom:0;flex:1;"></div>
+    </div>
+    <div id="agent-load-status" style="font-size:12px;color:var(--text2);margin-bottom:12px;min-height:16px;"></div>
+    <div class="agent-form">
+      <div><label>姓名</label><input type="text" id="agent_name" placeholder="劉小姐"></div>
+      <div><label>手機</label><input type="text" id="agent_mobile" placeholder="0970-525-624"></div>
+      <div><label>市話（可空白）</label><input type="text" id="agent_tel" placeholder="(02)8245-1005"></div>
+      <div><label>LINE ID</label><input type="text" id="agent_line" placeholder="@yuheng.amc"></div>
+      <div><label>營業員證照年份</label><input type="text" id="agent_lic_year" placeholder="113"></div>
+      <div><label>營業員證號（登字後數字）</label><input type="text" id="agent_license" placeholder="462794"></div>
+    </div>
+  </div>
+
+  <!-- API Key 設定 -->
+  <div class="card" id="api-key-card">
+    <div class="card-title">Gemini API Key</div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <input type="password" id="api_key_input" placeholder="貼上你的 Gemini API Key（AIza...）" style="flex:1;">
+      <button onclick="saveKey()" style="padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;">儲存</button>
+    </div>
+    <div id="key-status" style="font-size:12px;margin-top:8px;color:var(--text2);">
+      ⚠️ 尚未設定 API Key，請先填入才能產生文案
+    </div>
+  </div>
+
+  <button class="btn-generate" id="gen-btn" onclick="generate()">✨ 一鍵產生文案</button>
+
+  <!-- 輸出 -->
+  <div id="output-section">
+    <div class="card">
+      <div class="card-title">591 廣告標題（25字內，選一個）</div>
+      <div class="titles-grid" id="titles-output"></div>
+    </div>
+    <div class="card" style="margin-top:0">
+      <div class="card-title">完整文案</div>
+      <div class="copy-area">
+        <div class="output-text" id="copy-content"></div>
+        <button class="copy-btn" id="copy-btn" onclick="copyContent()">複製</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const RENT_INCLUDES = [
+  { key: 'ri_mgmt', label: '管理費' },
+  { key: 'ri_clean', label: '清潔費' },
+  { key: 'ri_cable', label: '第四台' },
+  { key: 'ri_net', label: '網路' },
+  { key: 'ri_water', label: '水費' },
+  { key: 'ri_elec', label: '電費' },
+  { key: 'ri_gas', label: '瓦斯費' },
+];
+
+const AMENITIES = [
+  { key: 'am_cvs', label: '便利商店' },
+  { key: 'am_market', label: '傳統市場' },
+  { key: 'am_mall', label: '百貨公司' },
+  { key: 'am_park', label: '公園綠地' },
+  { key: 'am_school', label: '學校' },
+  { key: 'am_hospital', label: '醫療機構' },
+  { key: 'am_night', label: '夜市' },
+];
+
+const FEATURES = {
+  lease: [
+    { key: 'f_rent_sub', label: '可申請租補' },
+    { key: 'f_tax', label: '可報稅' },
+    { key: 'f_register', label: '可入籍' },
+    { key: 'f_senior', label: '高齡友善' },
+    { key: 'f_cooking', label: '可開伙' },
+    { key: 'f_couple', label: '適合情侶' },
+    { key: 'f_family', label: '適合小家庭' },
+  ],
+  pet: [
+    { key: 'f_cat', label: '可養貓 🐱' },
+    { key: 'f_dog', label: '可養狗 🐶' },
+  ],
+  parking: [
+    { key: 'f_moto', label: '附機車位' },
+    { key: 'f_car', label: '附汽車位' },
+  ],
+  facility: [
+    { key: 'f_elevator', label: '電梯大樓' },
+    { key: 'f_manager', label: '有管理員' },
+    { key: 'f_trash', label: '垃圾代收' },
+    { key: 'f_trash_room', label: '垃圾集中處理區' },
+    { key: 'f_ac', label: '附冷氣' },
+    { key: 'f_washer', label: '附洗衣機' },
+    { key: 'f_fridge', label: '附冰箱' },
+    { key: 'f_water_heater', label: '附熱水器' },
+    { key: 'f_internet', label: '含網路' },
+    { key: 'f_cable', label: '含第四台' },
+  ],
+  util: [
+    { key: 'f_taipower', label: '台電收費' },
+    { key: 'f_gas_natural', label: '天然瓦斯' },
+  ],
+  space: [
+    { key: 'f_bathtub', label: '大浴缸' },
+    { key: 'f_big_balcony', label: '大陽台' },
+    { key: 'f_new_decor', label: '全新裝潢' },
+    { key: 'f_bright', label: '採光明亮' },
+    { key: 'f_high_ceil', label: '挑高格局' },
+    { key: 'f_square', label: '格局方正' },
+  ],
+};
+
+const SHEET_API = 'https://script.google.com/macros/s/AKfycbxdSFc7Kvx4Bor2VQuNd471mo2A2A5c8l09EQ11lqUuZinCDcQBtQShXs6j79N9xQjGng/exec';
+const FALLBACK_AGENT = { name: '劉小姐', mobile: '0970-525-624', tel: '(02)8245-1005', line: '@yuheng.amc', lic_year: '113', license: '462794' };
+let AGENTS = [];
+let activeAgent = 0;
+
+async function loadAgentsFromSheet() {
+  const statusEl = document.getElementById('agent-load-status');
+  statusEl.textContent = '載入夥伴資料中…';
+  try {
+    const res = await fetch(SHEET_API);
+    const data = await res.json();
+    if (data.agents && data.agents.length > 0) {
+      AGENTS = data.agents;
+      statusEl.textContent = '';
+    } else {
+      throw new Error('empty');
+    }
+  } catch(e) {
+    AGENTS = [{ ...FALLBACK_AGENT }];
+    statusEl.textContent = '⚠️ 無法讀取夥伴資料，使用預設值';
+    statusEl.style.color = 'var(--accent)';
+  }
+}
+
+function saveKey() {
+  const key = document.getElementById('api_key_input').value.trim();
+  if (!key) return;
+  GEMINI_KEY = key;
+  localStorage.setItem('gemini_api_key', key);
+  document.getElementById('api_key_input').value = '';
+  document.getElementById('key-status').textContent = '✅ API Key 已儲存！';
+  document.getElementById('key-status').style.color = 'var(--green)';
+}
+
+async function init() {
+  // Load saved key
+  if (GEMINI_KEY) {
+    document.getElementById('key-status').textContent = '✅ API Key 已設定';
+    document.getElementById('key-status').style.color = 'var(--green)';
+  }
+  buildChecks('rent-includes', RENT_INCLUDES);
+  buildChecks('amenities-grid', AMENITIES);
+  buildChecks('features-lease', FEATURES.lease);
+  buildChecks('features-pet', FEATURES.pet);
+  buildChecks('features-parking', FEATURES.parking);
+  buildChecks('features-facility', FEATURES.facility);
+  buildChecks('features-util', FEATURES.util);
+  buildChecks('features-space', FEATURES.space);
+  await loadAgentsFromSheet();
+  renderAgentTabs();
+}
+
+function buildChecks(containerId, items) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  items.forEach(f => {
+    const lbl = document.createElement('label');
+    lbl.className = 'check-item';
+    lbl.dataset.key = f.key;
+    lbl.innerHTML = `<input type="checkbox" value="${f.key}"><span>${f.label}</span>`;
+    lbl.addEventListener('click', function(e) {
+      e.preventDefault();
+      const cb = this.querySelector('input');
+      cb.checked = !cb.checked;
+      this.classList.toggle('active', cb.checked);
+    });
+    el.appendChild(lbl);
+  });
+}
+
+function getChecked(containerId) {
+  return Array.from(document.querySelectorAll(`#${containerId} .check-item.active`))
+    .map(el => el.querySelector('span').textContent.trim());
+}
+
+function renderAgentTabs() {
+  const tabs = document.getElementById('agent-tabs');
+  tabs.innerHTML = '';
+  AGENTS.forEach((a, i) => {
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:relative;display:inline-flex;align-items:center;';
+
+    const btn = document.createElement('div');
+    btn.className = 'agent-tab' + (i === activeAgent ? ' active' : '');
+    btn.style.paddingRight = AGENTS.length > 1 ? '28px' : '';
+    btn.textContent = a.name || `夥伴${i+1}`;
+    btn.onclick = () => selectAgent(i);
+    wrapper.appendChild(btn);
+
+    if (AGENTS.length > 1) {
+      const del = document.createElement('span');
+      del.textContent = '×';
+      del.title = '刪除此夥伴';
+      del.style.cssText = 'position:absolute;right:9px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--text2);cursor:pointer;line-height:1;';
+      del.onclick = (e) => { e.stopPropagation(); deleteAgent(i); };
+      wrapper.appendChild(del);
+    }
+
+    tabs.appendChild(wrapper);
+  });
+  // Add refresh button
+  const refresh = document.createElement('div');
+  refresh.className = 'agent-tab';
+  refresh.textContent = '↻ 重新載入';
+  refresh.style.color = 'var(--text2)';
+  refresh.onclick = async () => {
+    await loadAgentsFromSheet();
+    activeAgent = 0;
+    renderAgentTabs();
+  };
+  tabs.appendChild(refresh);
+  loadAgent(activeAgent);
+}
+
+function selectAgent(i) { saveAgent(activeAgent); activeAgent = i; renderAgentTabs(); }
+
+function saveAgent(i) {
+  // Read-only from Google Sheet — no local save needed
+}
+
+function deleteAgent(i) {
+  // Managed via Google Sheet
+}
+
+function loadAgent(i) {
+  const a = AGENTS[i];
+  document.getElementById('agent_name').value     = a.display_name || a.name || '';
+  document.getElementById('agent_mobile').value   = a.mobile || '';
+  document.getElementById('agent_tel').value      = a.tel || '';
+  document.getElementById('agent_line').value     = a.line || '';
+  document.getElementById('agent_lic_year').value = a.lic_year || '';
+  document.getElementById('agent_license').value  = a.license || '';
+}
+
+// Agents managed via Google Sheet
+
+function buildLayout() {
+  const parts = [
+    { v: document.getElementById('room').value, u: '房' },
+    { v: document.getElementById('hall').value, u: '廳' },
+    { v: document.getElementById('bath').value, u: '衛' },
+    { v: document.getElementById('balcony_num').value, u: '陽' },
+    { v: document.getElementById('kitchen_num').value, u: '廚' },
+  ];
+  return parts.filter(p => p.v && p.v !== '0').map(p => p.v + p.u).join('');
+}
+
+async function generate() {
+  saveAgent(activeAgent);
+  const agent = AGENTS[activeAgent];
+
+  if (!agent) {
+    alert('請先等夥伴資料載入完成，或按「↻ 重新載入」');
+    return;
+  }
+
+  if (!GEMINI_KEY) {
+    alert('請先填入 Gemini API Key！');
+    document.getElementById('api_key_input').focus();
+    return;
+  }
+
+  const district    = document.getElementById('district').value;
+  const addr        = document.getElementById('addr_public').value;
+  const caseType    = document.getElementById('case_type').value;
+  const buildType   = document.getElementById('building_type').value;
+  const layout      = buildLayout();
+  const floor       = document.getElementById('floor').value;
+  const totalFloor  = document.getElementById('total_floor').value;
+  const size        = document.getElementById('size').value;
+  const rent        = document.getElementById('rent').value;
+  const mgmtFee     = document.getElementById('mgmt_fee').value;
+  const transport   = document.getElementById('transport').value;
+  const extraFeat   = document.getElementById('extra_features').value;
+
+  const rentIncludes = getChecked('rent-includes');
+  const amenities    = getChecked('amenities-grid');
+  const allFeatures  = [
+    ...getChecked('features-lease'),
+    ...getChecked('features-pet'),
+    ...getChecked('features-parking'),
+    ...getChecked('features-facility'),
+    ...getChecked('features-util'),
+    ...getChecked('features-space'),
+  ];
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true; btn.textContent = '生成中…';
+  document.getElementById('output-section').style.display = 'block';
+  document.getElementById('titles-output').innerHTML = '<div class="loading"><div class="spinner"></div>AI 正在撰寫中…</div>';
+  document.getElementById('copy-content').textContent = '';
+
+  const propType = `${caseType}／${buildType}`;
+  const rentIncStr = rentIncludes.length ? `（含${rentIncludes.join('、')}）` : '';
+  const rentDisplay = rent ? `${rent}元/月` : '';
+  const mgmtDisplay = mgmtFee ? `管理費另計${mgmtFee}元/月` : '';
+
+  try {
+    const [titles, content] = await Promise.all([
+      genTitles({ district, propType, layout, transport, allFeatures, amenities }),
+      genContent({ district, addr, propType, layout, floor, totalFloor, size,
+        rentDisplay, mgmtDisplay, rentIncStr, transport, amenities, allFeatures, extraFeat, agent }),
+    ]);
+    renderTitles(titles);
+    document.getElementById('copy-content').textContent = content;
+  } catch(e) {
+    document.getElementById('titles-output').innerHTML = '<div style="color:#ff5555;padding:20px;">生成失敗，請稍後再試。</div>';
+    console.error(e);
+  }
+
+  btn.disabled = false; btn.textContent = '✨ 重新產生';
+  document.getElementById('output-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+let GEMINI_KEY = localStorage.getItem('gemini_api_key') || '';
+
+async function callAPI(prompt, maxTokens = 1000) {
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { maxOutputTokens: maxTokens, temperature: 0.8 }
+      })
+    }
+  );
+  const d = await res.json();
+  if (d.error) throw new Error(d.error.message);
+  return d.candidates[0].content.parts[0].text.trim();
+}
+
+async function genTitles({ district, propType, layout, transport, allFeatures, amenities }) {
+  const prompt = `你是台灣房屋租賃廣告專家。根據以下物件資訊，產生 4 個 591 廣告標題。
+
+物件資訊：
+- 地點：${district}
+- 類型：${propType}，格局：${layout||'未填'}
+- 交通：${transport||'無'}
+- 特色：${allFeatures.join('、')||'無'}
+- 生活機能：${amenities.join('、')||'無'}
+
+【標題公式】嚴格依照以下四個區塊順序，從物件資訊中挑選最吸引人的元素組合：
+① 最吸引人元素（放最前面，這是最大鉤子）：可租補、可養貓/狗、可開伙、可報稅、可入籍、全新裝潢、高齡友善等
+② 交通資訊（若有填寫則必須放）：步行幾分鐘到哪個捷運站／火車站
+③ 空間亮點：大陽台、大浴缸、挑高、採光明亮、格局方正等
+④ 加值服務：管理員、垃圾代收、台電收費、天然瓦斯、附車位等
+
+規則：
+- 每個標題 25 字（含 emoji）以內，超過必須縮短
+- 四個標題各突出不同賣點組合，不要重複
+- 每個區塊選 1～2 個最強的，不要全部塞進去
+- 適當加 emoji 增加視覺吸引力（🔥😍✨🐶🐱🚇🛁🏠💰⭐🌳等）
+- 語氣口語、吸睛、帶情感
+
+參考範例：😍超近❗️江子翠站走路3分鐘👍🏻超大浴缸✨可貓狗🐶
+
+只回傳 JSON 陣列，不含任何說明文字：["標題1","標題2","標題3","標題4"]`;
+
+  const text = await callAPI(prompt);
+  return JSON.parse(text.replace(/```json|```/g,'').trim());
+}
+
+async function genContent({ district, addr, propType, layout, floor, totalFloor, size,
+    rentDisplay, mgmtDisplay, rentIncStr, transport, amenities, allFeatures, extraFeat, agent }) {
+
+  // Build feature block
+  const featLines  = allFeatures.map(f => ` ✔ ${f}`).join('\n');
+  const extraLines = extraFeat
+    ? extraFeat.split('\n').filter(l=>l.trim()).map(l=>` ✔ ${l.trim()}`).join('\n')
+    : '';
+  const transLines = transport
+    ? transport.split('\n').filter(l=>l.trim()).map(l=>` ✔ ${l.trim()}`).join('\n')
+    : '';
+  const amenLines  = amenities.length
+    ? amenities.map(a => ` ✔ 鄰近${a}`).join('\n')
+    : '';
+
+  const featureBlock = [featLines, extraLines, transLines, amenLines].filter(Boolean).join('\n');
+
+  const rentFull = [rentDisplay, mgmtDisplay].filter(Boolean).join('，') + rentIncStr;
+  const telPart  = agent.tel ? `／${agent.tel}` : '';
+  const licLine  = (agent.lic_year && agent.license)
+    ? `📜不動產營業員(${agent.lic_year})年登字${agent.license}號`
+    : '';
+
+  const prompt = `你是台灣房屋租賃廣告文案專家。請根據以下資訊輸出完整 591 廣告文案，格式嚴格照以下範本，不要任何額外說明。
+
+物件：縣市行政區=${district}，地址=${addr}，類型=${propType}，格局=${layout||'未填'}，${floor}樓/總${totalFloor}樓，坪數=${size}，租金=${rentFull}
+
+特色（只列以下項目，每行前加 ✔）：
+${featureBlock || ' ✔ 請依物件特色補充'}
+
+輸出格式（一字不差照抄分隔線符號）：
+
+🔥[行政區][格局重點]｜[最強特色1]｜[最強特色2]｜[最強特色3]｜[交通或亮點]
+✨ 房屋特色
+${featureBlock || ' ✔ 特色待補'}
+┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄
+🏠 物件資訊
+▫ 類型：${propType}
+▫ 樓層/總樓層：${floor}樓/${totalFloor}樓
+▫ 坪數：${size}
+▫ 租金：${rentFull}
+▫ 縣市行政區：${district}
+▫ 地址：${addr}
+┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄
+💕 看房免費
+💕 成交收取半個月服務費
+┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄
+📞 歡迎直接致電／LINE 預約看房
+${agent.display_name || agent.name}｜${agent.mobile}${telPart}
+💬LINE ID：${agent.line}
+┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄ ┄
+🏢宥恆資產管理顧問有限公司
+｜買賣租賃｜包租代管｜財務配置｜資產管理｜
+${licLine}
+📜租賃住宅管理人員(114)登字第020607號
+📜經紀人證照(114)高市字第01426號`;
+
+  return callAPI(prompt, 1800);
+}
+
+function renderTitles(titles) {
+  const c = document.getElementById('titles-output');
+  c.innerHTML = '';
+  titles.forEach((t, i) => {
+    const len = [...t].length;
+    const el = document.createElement('div');
+    el.className = 'title-option' + (i === 0 ? ' selected' : '');
+    el.onclick = () => {
+      document.querySelectorAll('.title-option').forEach(x => x.classList.remove('selected'));
+      el.classList.add('selected');
+    };
+    el.innerHTML = `
+      <div class="title-radio"></div>
+      <div>
+        <div class="title-text">${t}</div>
+        <div class="char-count ${len > 25 ? 'over' : ''}">${len} 字${len > 25 ? '（超過25字，建議精簡）' : ''}</div>
+      </div>`;
+    c.appendChild(el);
+  });
+}
+
+function copyContent() {
+  const text = document.getElementById('copy-content').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ 已複製'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '複製'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
